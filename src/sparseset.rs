@@ -1,6 +1,8 @@
 
+use std::any::Any;
+
 use crate::ecs::{components::*};
-use crate::*;
+use crate::entity_storage::*;
 
 pub struct SparseSet<C: Component> {
     pub dense: Vec<EntityId>, // May have [50, 2, 8, 4]
@@ -49,19 +51,25 @@ impl<C: Component> SparseSet<C> {
 
     pub fn add_component(&mut self, id: EntityId, component: C) -> Result<(), &str>{
         let index = id.index as usize;
-        if self.dense[self.sparse[index]].type_id() == component.type_id() {
-            return Err(&"Component already present")
-        }
-        if self.dense[self.sparse[index]].generation != id.generation {
-            return Err(&"Stale ID")
+
+        if index >= self.sparse.len() { //
+            self.sparse.resize(index + 1, usize::MAX); //[USIZE::MAX]
         }
 
-        if index >= self.sparse.len() {
-            self.sparse.resize(index + 1, usize::MAX);
+        let dense_index: usize = self.sparse[index]; // = USIZE::MAX 
+
+        if let Some(val) = self.dense.get(dense_index) {
+            if val.generation != id.generation {
+                return Err(&"Stale ID")
+            }
+            return Err(&"Component already exists")
         }
+
         self.dense.push(id);
         self.components.push(component);
         self.sparse[index] = self.dense.len() - 1;
+        
+
         Ok(())
        
     }
