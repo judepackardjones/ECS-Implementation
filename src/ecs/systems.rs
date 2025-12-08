@@ -1,5 +1,5 @@
 use macroquad::prelude::*;
-use crate::ecs::{components::*, entities::*};
+use crate::ecs::{components::*};
 
 // The concrete World type is not imported here (no `crate::main` module in crate root),
 // so accept a generic placeholder for the world parameter to keep this module independent.
