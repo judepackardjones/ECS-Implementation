@@ -17,7 +17,6 @@ pub struct EntityManager {
 }
 pub struct World{
     pub items: HashMap<TypeId, Box<dyn AnySparseSet>>, // collections cannot have more than one generic type so we have to make a trait object for sparseset
-    pub manager: EntityManager,
 }
 
 impl EntityManager {
@@ -28,7 +27,7 @@ impl EntityManager {
             next_index: 0,
         }
     }
-    pub fn generate_new_id(&mut self) -> EntityId {
+    pub fn get_fresh_id(&mut self) -> EntityId {
         if self.free_indices_queue.is_empty() { // If there is no waiting index, increment the next_index 
             self.generations.push(1); // Add a new element for generations that will always be there 
             let given_index = self.next_index; 
@@ -55,10 +54,9 @@ impl EntityManager {
 
 
 impl World {
-    pub fn new(entity_manager: EntityManager) -> Self{
+    pub fn new() -> Self{
         World {
             items: HashMap::new(),
-            manager: entity_manager,
         }
     }
     pub fn ensure_set<C: Component>(&mut self) {
@@ -67,17 +65,7 @@ impl World {
             self.items.insert(type_id, Box::new(SparseSet::<C>::new()));
         }
     }
-    pub fn get_fresh_id(&mut self) -> EntityId {
-        self.manager.generate_new_id()
-    }
     
-    pub fn remove_entity(&mut self, id: &EntityId) {
-        self.manager.delete_id(id);
-        for (k, v) in &self.items {
-
-        }
-        // Add removing all entity and component data
-    }
 
     pub fn get_component_set<C: Component>(&mut self) -> Option<&mut SparseSet<C>> {
         let type_id = TypeId::of::<C>();
