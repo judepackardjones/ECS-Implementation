@@ -66,6 +66,13 @@ impl World {
         }
     }
     
+    pub fn add_entity_component<C: Component>(&mut self, id: EntityId, component: C) -> Result<(), &str> {
+        self.get_component_set::<C>().unwrap().add_component(id, component)
+    }
+
+    pub fn remove_entity_component<C: Component>(&mut self, id: &EntityId) -> Result<(), &str> {
+        self.get_component_set::<C>().unwrap().remove_component(id)
+    }
 
     pub fn get_component_set<C: Component>(&mut self) -> Option<&mut SparseSet<C>> {
         let type_id = TypeId::of::<C>();
@@ -74,5 +81,9 @@ impl World {
         } else {
             None
         }
+    }
+    pub fn get_mut_component_vec<C: Component>(&mut self) -> &mut Vec<C> {
+        let set = self.get_component_set::<C>().unwrap();
+        &mut set.components
     }
 }
