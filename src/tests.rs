@@ -13,7 +13,7 @@ mod tests {
 
 
         world.get_component_set::<Position>().unwrap().add_component(first_entity_id.clone(), position).unwrap();
-        let position_value = world.get_component_set::<Position>().unwrap().get_component(&first_entity_id).unwrap().clone();
+        let position_value = world.get_component_set::<Position>().unwrap().get_mut_component(&first_entity_id).unwrap();
         assert_eq!(position_value, &Position {x: 1, y: 20});
     }
 }
