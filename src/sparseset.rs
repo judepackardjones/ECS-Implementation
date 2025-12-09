@@ -34,9 +34,16 @@ impl<C: Component> SparseSet<C> {
             sparse: Vec::new()
         }
     }
-    pub fn remove_component(&mut self, id: &EntityId) { // TODO
+
+    pub fn remove_component(&mut self, id: &EntityId) -> Result<(), &str> { // TODO
         let index = id.index as usize;
+        if index > self.sparse.len() {
+            return Err(&"Index out of range")
+        }
         let dense_index = self.sparse[index];
+        if id.generation != self.dense[dense_index].generation {
+            return Err(&"Stale ID")
+        }
         let last_index = self.dense.len() - 1;
         let last_component_id = self.dense[last_index];
 
@@ -46,6 +53,7 @@ impl<C: Component> SparseSet<C> {
         self.sparse[last_component_id.index as usize] = dense_index;
         self.dense.pop();
         self.components.pop();
+        Ok(())
 
     }
 
@@ -69,11 +77,30 @@ impl<C: Component> SparseSet<C> {
         self.components.push(component);
         self.sparse[index] = self.dense.len() - 1;
         
+    
 
         Ok(())
        
     }
-    pub fn get_component(&self, id: &EntityId) -> Option<&C> {
+    pub fn get_mut_component(&mut self, id: &EntityId) -> Option<&mut C> {
+        let index = id.index as usize;
+        if index >= self.sparse.len() { // Catches if the entity has been added but no components so the sparse array isn't large enough yet 
+            return None
+        }
+        let dense_index = self.sparse[index]; 
+
+        if dense_index >= self.components.len() { // Catches if there is a entity ID added but no component yet 
+            return None
+        }
+        let stored_entity_id = &self.dense[dense_index];
+        if stored_entity_id.generation != id.generation { // Makes sure the previous dense storage generation matches the id's generation to make sure we are not referencing old data. 
+            return None
+        }
+
+        Some(&mut self.components[dense_index])
+
+    }
+    pub fn read_component(&self, id: &EntityId) -> Option<&C> {
         let index = id.index as usize;
         if index >= self.sparse.len() { // Catches if the entity has been added but no components so the sparse array isn't large enough yet 
             return None
