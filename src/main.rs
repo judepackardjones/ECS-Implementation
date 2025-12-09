@@ -5,7 +5,7 @@ mod entity_storage;
 #[cfg(test)]
 mod tests;
 
-use std::{any::{Any, TypeId}, cell::RefCell, collections::HashMap};
+use std::{any::{Any, TypeId}, cell::{RefCell}, collections::HashMap};
 use crate::{ecs::{components::*, systems::*}, sparseset::*, entity_storage::*};
 use macroquad::prelude::*;
 
@@ -16,21 +16,30 @@ fn main() {
     let mut world: World  = World::new(); // Create world and attach the entity manager 
     
     world.ensure_set::<Position>(); // Ensures that world has a sparseset for position, and if it doesn't, creates one 
+    world.ensure_set::<Size>();
+    world.ensure_set::<Player>();
 
-    let first_entity_id = entity_manager.get_fresh_id();
-    entity_manager.delete_id(&first_entity_id);
-    let second_entity_id = entity_manager.get_fresh_id();
+    let player_id = entity_manager.get_fresh_id();
+    world.add_entity_component(player_id.clone(), Player {});
+    world.add_entity_component(player_id.clone(), Position {x: 50, y: 50});
+    world.add_entity_component(player_id.clone(), Size {r: 10});
 
-    let _ = world.get_component_set::<Position>().unwrap().add_component(second_entity_id.clone(), Position {x: 50, y: 60});
-
-    let second_add = world.get_component_set::<Position>().unwrap().add_component(second_entity_id.clone(), Position {x: 30, y: 50}).unwrap_err(); // Intended to fail 
-    println!("{}", second_add); // Intended to fail as Component already exists
-    let first_add = world.get_component_set::<Position>().unwrap().add_component(first_entity_id.clone(), Position {x: 10, y: 50}).unwrap_err(); // Intended to fail 
-    println!("{}", first_add); // Intended to fail as stale ID 
-
-    let second_entity_position = world.get_component_set::<Position>().unwrap().get_component(&second_entity_id).unwrap();
-    println!("Id: {} Generation: {}, Position Component: {:?}", &second_entity_id.index, &second_entity_id.generation, &second_entity_position);
+    let wall_id = entity_manager.get_fresh_id();
+    world.add_entity_component(wall_id.clone(), Position {x: 0, y: 0});
+    world.add_entity_component(wall_id.clone(), Size {r: 30});
     
+    world.remove_entity_component::<Position>(&wall_id);
+
+    let size_player_id = entity_manager.get_fresh_id();
+    world.add_entity_component(size_player_id.clone(), Player {});
+    world.add_entity_component(size_player_id.clone(), Size {r: 30});
+    {
+    let component_vec = world.get_mut_component_vec::<Position>();
+    for i in component_vec {
+        i.x += 1;
+    }
+    }
+    println!("{:?}", world.get_mut_component_vec::<Position>());
 }
 
 
